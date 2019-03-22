@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
-func validateNodeGroupIAM(i int, ng *NodeGroup, value, fieldName, path string) error {
+func validateNodeGroupIAM(ng *NodeGroup, value, fieldName, path string) error {
 	if value != "" {
 		p := fmt.Sprintf("%s.iam.%s and %s.iam", path, fieldName, path)
 		if ng.IAM.InstanceRoleName != "" {
@@ -102,20 +102,19 @@ func ValidateNodeGroupLabels(ng *NodeGroup) error {
 }
 
 // ValidateNodeGroup checks compatible fileds of a given nodegroup
-func ValidateNodeGroup(i int, ng *NodeGroup) error {
-	path := fmt.Sprintf("nodegroups[%d]", i)
+func ValidateNodeGroup(nodePath string, ng *NodeGroup) error {
 	if ng.Name == "" {
-		return fmt.Errorf("%s.name must be set", path)
+		return fmt.Errorf("%s.name must be set", nodePath)
 	}
 
 	if ng.IAM == nil {
 		return nil
 	}
 
-	if err := validateNodeGroupIAM(i, ng, ng.IAM.InstanceProfileARN, "instanceProfileARN", path); err != nil {
+	if err := validateNodeGroupIAM(ng, ng.IAM.InstanceProfileARN, "instanceProfileARN", nodePath); err != nil {
 		return err
 	}
-	if err := validateNodeGroupIAM(i, ng, ng.IAM.InstanceRoleARN, "instanceRoleARN", path); err != nil {
+	if err := validateNodeGroupIAM(ng, ng.IAM.InstanceRoleARN, "instanceRoleARN", nodePath); err != nil {
 		return err
 	}
 

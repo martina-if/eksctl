@@ -212,7 +212,7 @@ func doCreateNodeGroups(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg s
 			return errors.New("cannot use --only unless a config file is specified via --config-file/-f")
 		}
 
-		err := checkEachNodeGroup(cfg, func(i int, ng *api.NodeGroup) error {
+		err := checkEachNodeGroup(cfg, func(_ string, ng *api.NodeGroup) error {
 			if ng.AllowSSH && ng.SSHPublicKeyPath == "" {
 				return fmt.Errorf("--ssh-public-key must be non-empty string")
 			}
@@ -254,7 +254,7 @@ func doCreateNodeGroups(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg s
 		return errors.Wrapf(err, "getting VPC configuration for cluster %q", cfg.Metadata.Name)
 	}
 
-	err := checkEachNodeGroup(cfg, func(_ int, ng *api.NodeGroup) error {
+	err := checkEachNodeGroup(cfg, func(_ string, ng *api.NodeGroup) error {
 		// resolve AMI
 		if err := ctl.EnsureAMI(meta.Version, ng); err != nil {
 			return err
@@ -309,7 +309,7 @@ func doCreateNodeGroups(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg s
 			return err
 		}
 
-		err = checkEachNodeGroup(cfg, func(_ int, ng *api.NodeGroup) error {
+		err = checkEachNodeGroup(cfg, func(_ string, ng *api.NodeGroup) error {
 			if updateAuthConfigMap {
 				// authorise nodes to join
 				if err = authconfigmap.AddNodeGroup(clientSet, ng); err != nil {

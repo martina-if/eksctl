@@ -113,17 +113,18 @@ func skipNodeGroupsIfRequested(cfg *api.ClusterConfig) {
 
 // checkEachNodeGroup iterates over each nodegroup and calls check function
 // (this is need to avoid common goroutine-for-loop pitfall)
-func checkEachNodeGroup(cfg *api.ClusterConfig, check func(i int, ng *api.NodeGroup) error) error {
+func checkEachNodeGroup(cfg *api.ClusterConfig, check func(nodePath string, ng *api.NodeGroup) error) error {
 	for i := range cfg.NodeGroups {
-		if err := check(i, cfg.NodeGroups[i]); err != nil {
+		nodePath := fmt.Sprintf("nodegroups[%d]", i)
+		if err := check(nodePath, cfg.NodeGroups[i]); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func newNodeGroupChecker(i int, ng *api.NodeGroup) error {
-	if err := api.ValidateNodeGroup(i, ng); err != nil {
+func newNodeGroupChecker(nodePath string, ng *api.NodeGroup) error {
+	if err := api.ValidateNodeGroup(nodePath, ng); err != nil {
 		return err
 	}
 
@@ -150,10 +151,12 @@ func newNodeGroupChecker(i int, ng *api.NodeGroup) error {
 		ng.SecurityGroups.WithShared = api.NewBoolTrue()
 	}
 
-	if ng.AllowSSH {
-		if ng.SSHPublicKeyPath == "" {
-			ng.SSHPublicKeyPath = defaultSSHPublicKey
-		}
+	if ng.AllowSSH && ng.SSHPublicKeyPath == "" {
+		ng.SSHPublicKeyPath = defaultSSHPublicKey
+	}
+
+	if ng.SSHPublicKeyPath != defaultSSHPublicKey {
+		ng.AllowSSH = true;
 	}
 
 	if ng.VolumeSize > 0 {
@@ -276,9 +279,13 @@ func doCreateCluster(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg stri
 
 		skipNodeGroupsIfRequested(cfg)
 
-		err := checkEachNodeGroup(cfg, func(i int, ng *api.NodeGroup) error {
+		err := checkEachNodeGroup(cfg, func(_ string, ng *api.NodeGroup) error {
 			if ng.AllowSSH && ng.SSHPublicKeyPath == "" {
 				return fmt.Errorf("--ssh-public-key must be non-empty string")
+			}
+
+			if cmd.Flag("ssh-public-key").Changed {
+				ng.AllowSSH = true
 			}
 
 			// generate nodegroup name or use flag
@@ -347,7 +354,7 @@ func doCreateCluster(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg stri
 
 		customNetworkingNotice := "custom VPC/subnets will be used; if resulting cluster doesn't function as expected, make sure to review the configuration of VPC/subnets"
 
-		canUseForPrivateNodeGroups := func(_ int, ng *api.NodeGroup) error {
+		canUseForPrivateNodeGroups := func(_ string, ng *api.NodeGroup) error {
 			if ng.PrivateNetworking && !cfg.HasSufficientPrivateSubnets() {
 				return fmt.Errorf("none or too few private subnets to use with --node-private-networking")
 			}
@@ -427,7 +434,7 @@ func doCreateCluster(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg stri
 		return err
 	}
 
-	err := checkEachNodeGroup(cfg, func(_ int, ng *api.NodeGroup) error {
+	err := checkEachNodeGroup(cfg, func(_ string, ng *api.NodeGroup) error {
 		// resolve AMI
 		if err := ctl.EnsureAMI(meta.Version, ng); err != nil {
 			return err
@@ -515,7 +522,7 @@ func doCreateCluster(p *api.ProviderConfig, cfg *api.ClusterConfig, nameArg stri
 			return err
 		}
 
-		err = checkEachNodeGroup(cfg, func(_ int, ng *api.NodeGroup) error {
+		err = checkEachNodeGroup(cfg, func(_ string, ng *api.NodeGroup) error {
 			// authorise nodes to join
 			if err = authconfigmap.AddNodeGroup(clientSet, ng); err != nil {
 				return err

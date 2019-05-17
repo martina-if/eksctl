@@ -43,11 +43,11 @@ plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
   - jemoji
+  - jekyll-github-metadata
+  - jekyll-mentions
+  - jekyll-redirect-from
+  - jekyll-remote-theme
   # # required for local builds with starefossen/github-pages
-  # - jekyll-github-metadata
-  # - jekyll-mentions
-  # - jekyll-redirect-from
-  # - jekyll-remote-theme
 
 exclude:
   - CNAME

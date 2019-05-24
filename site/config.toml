@@ -1,0 +1,13 @@
+baseURL = "http://example.org/"
+languageCode = "en-us"
+title = "My My New Hugo Site"
+theme = "eksctl"
+[params]
+  repository = "weaveworks/eksctl"
+  brand_color= "amber-400"
+  by_weaveworks = true
+
+[params.twitter]
+    username = "weaveworks"
+[params.author]
+    twitter= "weaveworks"

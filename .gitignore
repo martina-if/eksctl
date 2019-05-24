@@ -56,3 +56,4 @@ test-results/
 
 integration/kubeconfig-*
 
+site/themes/eksctl/node_modules

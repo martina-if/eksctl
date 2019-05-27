@@ -3,8 +3,8 @@
     {{/*  lang="{{ page.lang | default: site.lang | default: "en" }}"*/}}
     class="dark-gray">
 <head>
-{{/*    {{ if jekyll.environment == 'production' and site.google_analytics }}*/}}
-{{/*    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics }}"></script>*/}}
+    {{/*    {{ if jekyll.environment == 'production' and site.google_analytics }}*/}}
+    {{/*    <script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics }}"></script>*/}}
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
@@ -12,158 +12,73 @@
 
         {{/*gtag('config', '{{ site.google_analytics }}');*/}}
     </script>
-{{/*    {{ end }}*/}}
+    {{/*    {{ end }}*/}}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-{{/*    {{ feed_meta }}*/}}
-        <link rel="stylesheet" href="{{ "/css/app.css" | relURL }}">
+    {{/*    {{ feed_meta }}*/}}
+    <link rel="stylesheet" href="{{ "/css/app.css" | relURL }}">
     <link rel="stylesheet" href="{{ "/css/app.css" }}">
     {{ if $.Param "by_weaveworks" }}
-          <link rel="icon" href="{{ "/assets/favicon/favicon_150px.png" | relURL }}" sizes="32x32"/>
-          <link rel="icon" href="{{ "/assets/favicon/favicon_300px.png" | relURL }}" sizes="192x192"/>
-          <link rel="apple-touch-icon-precomposed" href="{{ "/assets/favicon/favicon_180px.png" | relURL }}"/>
-          <meta name="msapplication-TileImage" content="{{ "/assets/favicon/favicon_300px.png"  | relURL }}"/>
-    <link rel="icon" href="{{ "/assets/favicon/favicon_150px.png" }}" sizes="32x32"/>
-    <link rel="icon" href="{{ "/assets/favicon/favicon_300px.png" }}" sizes="192x192"/>
-    <link rel="apple-touch-icon-precomposed" href="{{ "/assets/favicon/favicon_180px.png" }}"/>
-    <meta name="msapplication-TileImage" content="{{ "/assets/favicon/favicon_300px.png"  }}"/>
+        <link rel="icon" href="{{ "/assets/favicon/favicon_150px.png" | relURL }}" sizes="32x32"/>
+        <link rel="icon" href="{{ "/assets/favicon/favicon_300px.png" | relURL }}" sizes="192x192"/>
+        <link rel="apple-touch-icon-precomposed" href="{{ "/assets/favicon/favicon_180px.png" | relURL }}"/>
+        <meta name="msapplication-TileImage" content="{{ "/assets/favicon/favicon_300px.png"  | relURL }}"/>
+        <link rel="icon" href="{{ "/assets/favicon/favicon_150px.png" }}" sizes="32x32"/>
+        <link rel="icon" href="{{ "/assets/favicon/favicon_300px.png" }}" sizes="192x192"/>
+        <link rel="apple-touch-icon-precomposed" href="{{ "/assets/favicon/favicon_180px.png" }}"/>
+        <meta name="msapplication-TileImage" content="{{ "/assets/favicon/favicon_300px.png"  }}"/>
     {{ else }}
-          <link rel="icon" href="{{ "/assets/favicon/generic.ico" | relURL }}" sizes="32x32"/>
-    <link rel="icon" href="{{ "/assets/favicon/generic.ico" }}" sizes="32x32"/>
+        <link rel="icon" href="{{ "/assets/favicon/generic.ico" | relURL }}" sizes="32x32"/>
+        <link rel="icon" href="{{ "/assets/favicon/generic.ico" }}" sizes="32x32"/>
     {{ end }}
-{{/*    {{ seo }}*/}}
+    {{/*    {{ seo }}*/}}
 </head>
 <body>
 
 {{ with $.Site.Params.repository }}
-<div class="github-buttons">
-    <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star {{ $.Site.Params.repository }} on GitHub">Star</a>
-    <!--
+    <div class="github-buttons">
+        <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star {{ $.Site.Params.repository }} on GitHub">Star</a>
+        <!--
 {{/*          <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}/subscription" data-icon="octicon-eye" data-size="large" data-show-count="true" aria-label="Watch {{ $.Site.Params.repository }} on GitHub">Watch</a>*/}}
         -->
-    <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}/fork" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork {{ $.Site.Params.repository }} on GitHub">Fork</a>
-    <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}/issues" data-icon="octicon-issue-opened" data-size="large" data-show-count="true" aria-label="Issue {{ $.Site.Params.repository }} on GitHub">Issue</a>
-</div>
+        <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}/fork" data-icon="octicon-repo-forked" data-size="large" data-show-count="true" aria-label="Fork {{ $.Site.Params.repository }} on GitHub">Fork</a>
+        <a class="github-button" href="https://github.com/{{ $.Site.Params.repository }}/issues" data-icon="octicon-issue-opened" data-size="large" data-show-count="true" aria-label="Issue {{ $.Site.Params.repository }} on GitHub">Issue</a>
+    </div>
 {{ end }}
+<highlight html>
 <main class="measure-wide center ph3 pt5 pb6">
-    {{ if .IsHome}}
     <h1 class="mt0 mb4">
-        {{ else }}
-        <h2 class="mt0 mb5">
-            {{ end }}
-            {{ if $.Site.Params.repository }}
+        {{ if $.Site.Params.repository }}
             {{ if $.Site.Params.by_weaveworks }}
-            <div class="sponsor-badge">
-                <span class="sponsor-badge-text" style="margin-left: 0rem;">sponsored by</span>
-                <a class="sponsor-badge-link" href="https://weave.works">
-                    <img src="{{ "/assets/images/weaveworks.svg" | relURL }}" style="height: 1rem;margin-bottom: -0.25rem;">
-                </a>
-                <span class="sponsor-badge-text">and built by</span>
-                <a class="sponsor-badge-link" href="https://github.com/{{ $.Site.Params.repository }}/graphs/contributors">
-                    <img src="{{ "/assets/images/gophers.png" | relURL }}" style="height: 1.5rem;margin-bottom: -0.3rem;">
-                </a>
-                <span class="sponsor-badge-text">on</span>
-                <a class="sponsor-badge-link" href="https://github.com/{{ $.Site.Params.repository }}">
-                    <img src="{{ "/assets/images/octocat.svg" | relURL }}" style="height: 1rem;margin-bottom: -0.1rem;">
-                </a>
-            </div>
+                <div class="sponsor-badge">
+                    <span class="sponsor-badge-text" style="margin-left: 0rem;">sponsored by</span>
+                    <a class="sponsor-badge-link" href="https://weave.works">
+                        <img src="{{ "/assets/images/weaveworks.svg" | relURL }}" style="height: 1rem;margin-bottom: -0.25rem;">
+                    </a>
+                    <span class="sponsor-badge-text">and built by</span>
+                    <a class="sponsor-badge-link" href="https://github.com/{{ $.Site.Params.repository }}/graphs/contributors">
+                        <img src="{{ "/assets/images/gophers.png" | relURL }}" style="height: 1.5rem;margin-bottom: -0.3rem;">
+                    </a>
+                    <span class="sponsor-badge-text">on</span>
+                    <a class="sponsor-badge-link" href="https://github.com/{{ $.Site.Params.repository }}">
+                        <img src="{{ "/assets/images/octocat.svg" | relURL }}" style="height: 1rem;margin-bottom: -0.1rem;">
+                    </a>
+                </div>
             {{ end }}
-            {{ else }}
+        {{ else }}
             <a
                 href="{{ "/"  | relURL }}"
                 class="no-underline bg-{{ .Params.brand_color }}">
                 {{ .Title }}
             </a>
-            {{ end }}
-            {{ if .IsHome }}
+        {{ end }}
     </h1>
-    {{ else }}
-    </h2>
-    {{ end }}
-    {{ if .IsHome }}
     <section class="pv2">
         {{ .Content }}
     </section>
-    {{ else }}
-    <section class="pv2">
-        <h1 class="mt0 mb1">{{ .Page.Title }}</h1>
-        {{ if .Page.Date }}
-        <p class="silver mt0">
-{{/*            <time datetime="{{ .Page.date | date_to_xmlschema }}">*/}}
-{{/*                {{ page.date | date: site.date_format }}*/}}
-            </time>
-        </p>
-        {{ end }}
-        <p class="twitter-share-button-wrapper">
-            <a class="twitter-share-button"
-               href="https://twitter.com/intent/tweet"
-               data-size="large"
-               data-via="{{ .Params.twitter.username }}">
-                Tweet</a>
-        </p>
-        {{ .Content }}
-        {{ if .Page.Date }}
-        <p class="silver">
-{{/*            <time datetime="{{ page.date | date_to_xmlschema }}">*/}}
-{{/*                {{ page.date | date: site.date_format }}*/}}
-            </time>
-        </p>
-        {{ end }}
-    </section>
-    <hr />
-    <section class="pv2">
-{{/*        FIXME*/}}
-{{/*        {{ $home := .Pages | where:"url","/" }}*/}}{{/* */}}
-{{/*        {{ home[0].Content | markdownify }}*/}}
-    </section>
-    {{ end }}
-    {{ println .Pages }}
-{{/*    {{ if .Pages.Size gt 0 }}*/}}
-    <hr />
-    <section class="pv2">
-        <ul class="list pl0">
-            {{ if .IsHome }}
-{{/*            {{ for post in site.posts }}*/}}
-{{/*            {{ if forloop.index0 == site.num_posts_visible_initially }}*/}}
-{{/*            <li class="mt0 mb4">*/}}
-{{/*                <h4 class="ma0">*/}}
-{{/*                    <a class="bg-{{ .Params.brand_color }} pv2 ph3 dib ba b--black-20 br3 no-underline js-more" href="#">*/}}
-{{/*                        View All*/}}
-{{/*                    </a>*/}}
-{{/*                </h4>*/}}
-{{/*            </li>*/}}
-            {{ end }}
-{{/*            <li class="mt0 mb4 {{ if forloop.index0 >= site.num_posts_visible_initially }}dn js-hidden{{ end }}">*/}}
-{{/*                <span class="silver db mb1">{{ post.date | date: site.date_format }}</span>*/}}
-{{/*                <h3 class="ma0">*/}}
-{{/*                    <a class=" no-underline" href="{{ post.url }}">{{ post.title | escape }}</a>*/}}
-{{/*                </h3>*/}}
-{{/*            </li>*/}}
-{{/*            {{ end }}*/}}
-{{/*            {{ else }}*/}}
-{{/*            {{ for post in site.posts limit:site.num_posts_visible_initially }}*/}}
-{{/*            <li class="mt0 mb4">*/}}
-{{/*                <span class="silver db mb1">{{ post.date | date: site.date_format }}</span>*/}}
-{{/*                <h3 class="ma0">*/}}
-{{/*                    <a class=" no-underline" href="{{ post.url }}">{{ post.title | escape }}</a>*/}}
-{{/*                </h3>*/}}
-{{/*            </li>*/}}
-{{/*            {{ endfor }}*/}}
-{{/*            <li class="pt4 mt0 mb4">*/}}
-{{/*                <h2 class="ma0">*/}}
-{{/*                    <a*/}}
-{{/*                        href="{{ "/"  }}"*/}}
-{{/*                        class="no-underline bg-{{ .Params.brand_color }}">*/}}
-{{/*                        {{ .Page.Title }}*/}}
-{{/*                    </a>*/}}
-{{/*                </h2>*/}}
-{{/*            </li>*/}}
-{{/*            {{ end }}*/}}
-{{/*        </ul>*/}}
-{{/*    </section>*/}}
-{{/*    {{ end }}*/}}
-{{/*</main>*/}}
+</main>
+</highlight>
 <a
     href="https://github.com/{{ $.Site.Params.repository }}"
     class="github-corner">

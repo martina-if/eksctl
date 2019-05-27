@@ -1,7 +1,9 @@
-baseURL = "http://example.org/"
+baseURL = "https://eksctl.io"
 languageCode = "en-us"
-title = "My My New Hugo Site"
+title = "Eksctl"
 theme = "eksctl"
+
+
 [params]
   repository = "weaveworks/eksctl"
   brand_color= "amber-400"

@@ -6,9 +6,7 @@ description = ""
 tags = []
 features = []
 min_version = "0.41"
-pygmentsUseClasses=true
-PygmentsCodeFences = true
-PygmentsStyle = "monokai"
+
 
 [author]
   name = ""

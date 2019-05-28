@@ -2,7 +2,8 @@ baseURL = "https://eksctl.io"
 languageCode = "en-us"
 title = "Eksctl"
 theme = "eksctl"
-
+pygmentsCodeFences = true
+pygmentsUseClasses = true
 
 [params]
   repository = "weaveworks/eksctl"

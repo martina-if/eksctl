@@ -1,3 +1,8 @@
+---
+title: "Creating and managing clusters"
+weight: 10
+---
+
 ### Using Config Files
 
 You can create a cluster using a config file instead of flags.

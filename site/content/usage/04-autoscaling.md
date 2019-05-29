@@ -1,3 +1,7 @@
+---
+title: "Autoscaling"
+weight: 40
+---
 ### Enable Autoscaling
 
 You can create a cluster (or nodegroup in an existing cluster) with IAM role that will allow use of [cluster autoscaler][]:

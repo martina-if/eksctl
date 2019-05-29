@@ -1,3 +1,7 @@
+---
+title: "Installation"
+weight: 20
+---
 ### Shell Completion
 
 To enable bash completion, run the following, or put it in `~/.bashrc` or `~/.profile`:

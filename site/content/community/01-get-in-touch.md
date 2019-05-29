@@ -1,3 +1,8 @@
+---
+title: "Get in touch"
+weight: 10
+---
+
 ## Get in touch
 
 [Create an issue](https://github.com/weaveworks/eksctl/issues/new), or login to [Weave Community Slack (#eksctl)][slackchan] ([signup][slackjoin]).

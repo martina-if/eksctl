@@ -1,3 +1,8 @@
+---
+title: "Managing nodegroups"
+weight: 20
+---
+
 ### Managing nodegroups
 
 You can add one or more nodegroups in addition to the initial nodegroup created along with the cluster.

@@ -1,3 +1,7 @@
+---
+title: "Cluster Upgrades"
+weight: 30
+---
 
 ### Cluster Upgrades
 

@@ -1,3 +1,7 @@
+---
+title: "Autoscaling"
+weight: 60
+---
 ### VPC Networking
 
 By default, `eksctl create cluster` will build a dedicated VPC, in order to avoid interference with any existing resources for a

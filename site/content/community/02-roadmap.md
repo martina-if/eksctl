@@ -1,3 +1,8 @@
+---
+title: "Road Map"
+weight: 20
+---
+
 ## Project Roadmap
 
 ### Developer use-case (0.2.0)

@@ -1,10 +1,11 @@
 (function() {
     'use strict';
 
-    function flashCopyMessage(el, msg) {
+    function flashCopyMessage(el, color) {
         el.textContent = msg;
         setTimeout(function() {
-            el.textContent = "Copy";
+            // el.textContent = "Copy";
+            el.background-color = ""
         }, 1000);
     }
 
@@ -20,7 +21,6 @@
     function addCopyButton(containerEl) {
         var copyBtn = document.createElement("button");
         copyBtn.className = "highlight-copy-btn";
-        copyBtn.textContent = "Copy";
 
         var codeEl = containerEl.firstElementChild;
         copyBtn.addEventListener('click', function() {

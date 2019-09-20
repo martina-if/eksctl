@@ -29,7 +29,7 @@ EKSCTL_EXPERIMENTAL=true eksctl install flux --cluster=<cluster_name> --region=<
 
 Or use a config file:
 ```console
-EKSCTL_EXPERIMENTAL=true eksctl install flux -f examples/01-simple-cluster.yaml --git-url=git@github.com:weaveworks/cluster-1-gitops.git --git-email=johndoe+flux@weave.works
+EKSCTL_EXPERIMENTAL=true eksctl install flux --cluster cluster-1 --git-url=git@github.com:weaveworks/cluster-1-gitops.git --git-email=johndoe+flux@weave.works
 ```
 
 Note that, by default, `eksctl install flux` installs [Helm](https://helm.sh/) server components to the cluster (it
@@ -144,13 +144,13 @@ cluster:
 To install those components the command `generate profile` can be used:
 
 ```console
-EKSCTL_EXPERIMENTAL=true eksctl generate profile --config-file=<cluster_config_file> --git-url git@github.com:weaveworks/eks-quickstart-app-dev.git --profile-path <output_directory>
+EKSCTL_EXPERIMENTAL=true eksctl generate profile --name <cluster_name> --region <region> --git-url git@github.com:weaveworks/eks-quickstart-app-dev.git --profile-path <output_directory>
 ```
 
 For example:
 
 ```
-$ EKSCTL_EXPERIMENTAL=true eksctl generate profile  --config-file 01-simple-cluster.yaml --git-url git@github.com:weaveworks/eks-quickstart-app-dev.git --profile-path my-gitops-repo/base/
+$ EKSCTL_EXPERIMENTAL=true eksctl generate profile  --name cluster-1 --region eu-north-1 --git-url git@github.com:weaveworks/eks-quickstart-app-dev.git --profile-path my-gitops-repo/base/
 [ℹ]  cloning repository "git@github.com:weaveworks/eks-quickstart-app-dev.git":master
 Cloning into '/tmp/quickstart-224631067'...
 warning: templates not found /home/.../.git_template

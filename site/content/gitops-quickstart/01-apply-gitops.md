@@ -350,6 +350,7 @@ Now please run:
 ```console
 EKSCTL_EXPERIMENTAL=true eksctl generate profile \
         --name wonderful-wardrobe-1565767990 \
+        --region us-west-2 \
         --git-url git@github.com:weaveworks/eks-quickstart-app-dev.git \
         --profile-path ~/dev/flux-get-started/cluster-config
 ```

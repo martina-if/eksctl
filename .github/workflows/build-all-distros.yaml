@@ -1,0 +1,14 @@
+name: Build Binaries for all distros
+on: [push]
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+        name: Checkout project
+      - name: Pull docker image
+        run: docker pull weaveworks/eksctl-build:$(cat .docker/image_tag)
+      - name: Build with goreleaser
+        run: docker run weaveworks/eksctl-build:$(cat .docker/image_tag) make build-all

@@ -200,10 +200,14 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - build-all-distros: # Build locally with goreleaser
+  build-all-tag:
+    jobs:
+      - build-all-distros: # Build locally with gorelease
           filters:
+            branches:
+              ignore: /.*/
             tags:
-              only: /build-all.*/
+              only: /^goreleaser.*/
   release:
     jobs:
       - test-and-build:

@@ -200,7 +200,7 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-      - build-all-distros:
+      - build-all-distros: # Build locally with goreleaser
           filters:
             tags:
               only: /build-all.*/

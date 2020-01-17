@@ -205,6 +205,8 @@ workflows:
       - build-all-distros: # Build locally with gorelease
           type: approval
           filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^goreleaser.*/
   release:

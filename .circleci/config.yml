@@ -201,11 +201,7 @@ workflows:
             tags:
               ignore: /.*/
       - build-all-distros:
-          requires:
-            - test-and-build
           filters:
-            branches:
-              ignore: /.*/
             tags:
               only: /build-all.*/
   release:

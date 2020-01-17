@@ -201,9 +201,11 @@ workflows:
             tags:
               ignore: /.*/
       - build-all-distros:
-          type: approval
           requires:
             - test-and-build
+          filters:
+            tags:
+              only: /build-all.*/
   release:
     jobs:
       - test-and-build:

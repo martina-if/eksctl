@@ -105,6 +105,12 @@ jobs:
       GOPRIVATE: github.com/weaveworks/aws-sdk-go-private
     steps:
       - checkout
+      - run: |
+          CURRENT_TAG=$(git describe --exact-match --tags HEAD)
+          if [[ ${CURRENT_TAG} =~  ^build-all.* ]]; then
+            echo 'Tag build-all* not found. Not building for all distros'
+            circleci-agent step halt
+          fi
       - add_ssh_keys:
           fingerprints:
             - "81:df:39:29:89:d6:34:ed:2e:4e:70:71:f1:f3:f6:0c"
@@ -203,10 +209,9 @@ workflows:
   build-all-tag:
     jobs:
       - build-all-distros: # Build locally with gorelease
-          type: approval
           filters:
             tags:
-              only: /^goreleaser.*/
+              ignore: /.*/
   release:
     jobs:
       - test-and-build:

@@ -19,3 +19,6 @@ template: |
   ## Acknowledgments
   Weaveworks would like to sincerely thank:
   $CONTRIBUTORS
+replacers:
+  - search: '/(@martina-if|@marccarre|@cpu1)(,)?/g'
+    replace: ''

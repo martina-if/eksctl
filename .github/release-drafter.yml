@@ -12,7 +12,7 @@ categories:
       - 'kind/bug'
 change-template: '- $TITLE (#$NUMBER)'
 template: |
-  # $NEXT_MINOR_VERSION
+  # Release $NEXT_MINOR_VERSION
 
   $CHANGES
 

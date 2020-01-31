@@ -192,6 +192,14 @@ prepare-release-candidate:
 print-version:
 	@go run pkg/version/generate/release_generate.go print-version
 
+.PHONY: release-github
+release-github:
+	github-release info --user $(git_org) --repo $(git_repo) --tag $(eksctl_version)
+	github-release upload --user $(git_org) --repo $(git_repo) --tag $(eksctl_version) --file dist/eksctl_Windows_amd64.zip --name eksctl_Windows_amd64.zip
+	github-release upload --user $(git_org) --repo $(git_repo) --tag $(eksctl_version) --file dist/eksctl_Darwin_amd64.tar.gz --name eksctl_Darwin_amd64.tar.gz
+	github-release upload --user $(git_org) --repo $(git_repo) --tag $(eksctl_version) --file dist/eksctl_Linux_amd64.tar.gz --name eksctl_Linux_amd64.tar.gz
+	github-release publish --user $(git_org) --repo $(git_repo) --tag $(eksctl_version)
+
 ##@ Docker
 
 .PHONY: eksctl-image

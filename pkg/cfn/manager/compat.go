@@ -1,9 +1,14 @@
 package manager
 
 import (
+	"fmt"
+
+	gfn "github.com/awslabs/goformation/cloudformation"
 	"github.com/kris-nova/logger"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
+
 	"github.com/weaveworks/eksctl/pkg/cfn/builder"
 	"github.com/weaveworks/eksctl/pkg/cfn/outputs"
 )
@@ -72,4 +77,27 @@ func (c *StackCollection) hasManagedToUnmanagedSG() (bool, error) {
 	}
 	stackResources := gjson.Get(stackTemplate, resourcesRootPath)
 	return builder.HasManagedNodesSG(&stackResources), nil
+}
+
+// setMapPublicIpOnLaunch sets this subnet property to true when it is not set or is set to false
+func (c *StackCollection) setMapPublicIpOnLaunch(currentTemplate string) (string, []string, error) {
+	outputTemplate := gjson.Get(currentTemplate, outputsRootPath)
+	publicSubnetsNames, err := getPublicSubnetResourceNames(outputTemplate.Raw)
+	if err != nil {
+		return "", nil, errors.Wrap(err, "error reading existing subnets from stack template")
+	}
+
+	modifiedResources := make([]string, 0)
+	for _, subnet := range publicSubnetsNames {
+		path := fmt.Sprintf("Resources.%s.Properties.MapPublicIpOnLaunch", subnet)
+		currentValue := gjson.Get(currentTemplate, path)
+		if !currentValue.Exists() || !currentValue.Bool() {
+			currentTemplate, err = sjson.Set(currentTemplate, path, gfn.True())
+			if err != nil {
+				return "", nil, errors.Wrapf(err, "unable to set MapPublicIpOnLaunch property on subnet %q", path)
+			}
+			modifiedResources = append(modifiedResources, subnet)
+		}
+	}
+	return currentTemplate, modifiedResources, nil
 }

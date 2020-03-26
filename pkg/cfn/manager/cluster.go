@@ -122,6 +122,7 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 	if err != nil {
 		return false, errors.Wrapf(err, "rendering template for %q stack", name)
 	}
+
 	logger.Debug("newTemplate = %s", newTemplate)
 
 	newResources := gjson.Get(string(newTemplate), resourcesRootPath)
@@ -147,6 +148,7 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 
 	var (
 		addResources []string
+		modResources []string
 		addOutputs   []string
 		addMappings  []string
 	)
@@ -171,18 +173,26 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 		return false, errors.Wrap(iterErr, "adding mappings to current stack template")
 	}
 
-	if len(addResources) == 0 && len(addOutputs) == 0 && len(addMappings) == 0 {
+	// Update the VPC by setting the flag MapPublicIpOnLaunch on public subnets
+	logger.Debug("updating subnets with MapPublicIpOnLaunch = true")
+	currentTemplate, modResources, err = c.setMapPublicIpOnLaunch(currentTemplate)
+	if err != nil {
+		return false, errors.Wrap(err, "unable to update public subnets with property MapPublicIpOnLaunch")
+	}
+
+	if len(addResources) == 0 && len(addOutputs) == 0 && len(addMappings) == 0 && len(modResources) == 0 {
 		logger.Success("all resources in cluster stack %q are up-to-date", name)
 		return false, nil
 	}
 
 	logger.Debug("currentTemplate = %s", currentTemplate)
 
-	describeUpdate := fmt.Sprintf("updating stack to add new resources %v and outputs %v", addResources, addOutputs)
+	describeUpdate := fmt.Sprintf("updating stack to add new resources %v, new outputs %v, modified resources %v", addResources, addOutputs, modResources)
 	if plan {
 		logger.Info("(plan) %s", describeUpdate)
 		return false, nil
 	}
+
 	return true, c.UpdateStack(name, c.MakeChangeSetName("update-cluster"), describeUpdate, []byte(currentTemplate), nil)
 }
 
@@ -206,4 +216,26 @@ func getClusterNameTag(s *Stack) string {
 		}
 	}
 	return ""
+}
+
+// getPublicSubnetResourceNames returns the stack resource names for the public subnets, gotten from the stack
+// output "SubnetsPublic"
+func getPublicSubnetResourceNames(outputsTemplate string) ([]string, error) {
+	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join")
+	if !publicSubnets.Exists() || len(publicSubnets.Array()) != 2 {
+		return nil, fmt.Errorf("invalid output SubnetsPublic. Expected Fn::Join but found %q", publicSubnets.Raw)
+	}
+	rawRefs := publicSubnets.Array()[1]
+	if !rawRefs.Exists() || len(rawRefs.Array()) == 0 {
+		return nil, fmt.Errorf("invalid output SubnetsPublic. Expected array of refs but found %q", rawRefs.Array())
+	}
+	subnetStackNames := make([]string, 0)
+	for _, ref := range rawRefs.Array() {
+		stackName := ref.Get("Ref")
+		if !stackName.Exists() {
+			return nil, fmt.Errorf("invalid output SubnetPublic. Expected array of refs but found %q", ref.Raw)
+		}
+		subnetStackNames = append(subnetStackNames, stackName.String())
+	}
+	return subnetStackNames, nil
 }

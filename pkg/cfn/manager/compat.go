@@ -11,6 +11,7 @@ import (
 
 	"github.com/weaveworks/eksctl/pkg/cfn/builder"
 	"github.com/weaveworks/eksctl/pkg/cfn/outputs"
+	"github.com/weaveworks/eksctl/pkg/vpc"
 )
 
 // FixClusterCompatibility adds any resources missing in the CloudFormation stack in order to support new features
@@ -54,7 +55,13 @@ func (c *StackCollection) FixClusterCompatibility() error {
 
 	stackSupportsFargate := fargateRole != ""
 
-	if stackSupportsManagedNodes && stackSupportsFargate {
+	// Check public subnets
+	publicSubnetsAreValid, err := c.isMapPublicIpOnLaunchEnabled()
+	if err != nil {
+		return err
+	}
+
+	if stackSupportsManagedNodes && stackSupportsFargate && publicSubnetsAreValid {
 		logger.Info("cluster stack has all required resources")
 		return nil
 	}
@@ -65,6 +72,10 @@ func (c *StackCollection) FixClusterCompatibility() error {
 	if !stackSupportsFargate {
 		logger.Info("cluster stack is missing resources for Fargate")
 	}
+	if !publicSubnetsAreValid {
+		logger.Info("public subnets don't have MapPublicIpOnLaunch enabled")
+	}
+
 	logger.Info("adding missing resources to cluster stack")
 	_, err = c.AppendNewClusterStackResource(false, true)
 	return err
@@ -79,17 +90,26 @@ func (c *StackCollection) hasManagedToUnmanagedSG() (bool, error) {
 	return builder.HasManagedNodesSG(&stackResources), nil
 }
 
-// setMapPublicIpOnLaunch sets this subnet property to true when it is not set or is set to false
-func (c *StackCollection) setMapPublicIpOnLaunch(currentTemplate string) (string, []string, error) {
+// ensureMapPublicIpOnLaunchEnabled sets this subnet property to true when it is not set or is set to false
+// returns the modified template and the list of modified subnets
+func (c *StackCollection) ensureMapPublicIpOnLaunchEnabled(currentTemplate string) (string, []string, error) {
 	outputTemplate := gjson.Get(currentTemplate, outputsRootPath)
 	publicSubnetsNames, err := getPublicSubnetResourceNames(outputTemplate.Raw)
 	if err != nil {
-		return "", nil, errors.Wrap(err, "error reading existing subnets from stack template")
+		// Subnets do not appear in the stack -> they were imported -> check their configuration in EC2
+		err = vpc.ValidateExistingPublicSubnets(c.provider, c.spec.PublicSubnetIDs())
+		if err != nil {
+			return "", nil, errors.Wrapf(err, "mis-configured imported subnets. Expected property MapPublicIpOnLaunch enabled")
+		}
+		return currentTemplate, make([]string, 0), nil
 	}
 
+	// Modify the subnets' properties in the stack
+	logger.Debug("ensuring subnets have MapPublicIpOnLaunch enabled")
 	modifiedResources := make([]string, 0)
 	for _, subnet := range publicSubnetsNames {
-		path := fmt.Sprintf("Resources.%s.Properties.MapPublicIpOnLaunch", subnet)
+		path := subnetResourcePath(subnet)
+
 		currentValue := gjson.Get(currentTemplate, path)
 		if !currentValue.Exists() || !currentValue.Bool() {
 			currentTemplate, err = sjson.Set(currentTemplate, path, gfn.True())
@@ -100,4 +120,35 @@ func (c *StackCollection) setMapPublicIpOnLaunch(currentTemplate string) (string
 		}
 	}
 	return currentTemplate, modifiedResources, nil
+}
+
+func (c *StackCollection) isMapPublicIpOnLaunchEnabled() (bool, error) {
+	currentTemplate, err := c.GetStackTemplate(c.makeClusterStackName())
+	if err != nil {
+		return false, errors.Wrapf(err, "error getting stack template %s", c.makeClusterStackName())
+	}
+
+	outputTemplate := gjson.Get(currentTemplate, outputsRootPath)
+	publicSubnetsNames, err := getPublicSubnetResourceNames(outputTemplate.Raw)
+	if err != nil {
+		// Subnets do not appear in the stack -> they were imported -> check their configuration in EC2
+		err = vpc.ValidateExistingPublicSubnets(c.provider, c.spec.PublicSubnetIDs())
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	}
+
+	// Subnets appear in the stack
+	for _, subnet := range publicSubnetsNames {
+		currentValue := gjson.Get(currentTemplate, subnetResourcePath(subnet))
+		if !currentValue.Exists() || !currentValue.Bool() {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func subnetResourcePath(subnetName string) string {
+	return fmt.Sprintf("Resources.%s.Properties.MapPublicIpOnLaunch", subnetName)
 }

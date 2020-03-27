@@ -65,6 +65,7 @@ func SetSubnets(spec *api.ClusterConfig) error {
 	return nil
 }
 
+// describeSubnets fetches subnet metadata from EC2
 func describeSubnets(provider api.ClusterProvider, subnetIDs ...string) ([]*ec2.Subnet, error) {
 	input := &ec2.DescribeSubnetsInput{
 		SubnetIds: aws.StringSlice(subnetIDs),
@@ -219,7 +220,43 @@ func ImportSubnetsFromList(provider api.ClusterProvider, spec *api.ClusterConfig
 	if err != nil {
 		return err
 	}
+
 	return ImportSubnets(provider, spec, topology, subnets)
+}
+
+// ImportValidatedSubnets will update the clusterconfig (spec) with the subnets metadata gotten from Ec2. But first it
+// will check that public subnets have the property MapPublicIpOnLaunch set
+// NOTE: it does respect all fields set in spec.VPC, and will error if
+// there is a mismatch of local vs remote states
+func ImportValidatedSubnets(provider api.ClusterProvider, spec *api.ClusterConfig, topology api.SubnetTopology, subnetIDs []string) error {
+	if len(subnetIDs) == 0 {
+		return nil
+	}
+	subnets, err := describeSubnets(provider, subnetIDs...)
+	if err != nil {
+		return err
+	}
+	if topology == api.SubnetTopologyPublic {
+		if err := validatePublicSubnet(subnets); err != nil {
+			return err
+		}
+	}
+	return ImportSubnets(provider, spec, topology, subnets)
+}
+
+// ValidateExistingPublicSubnets makes sure that subnets have the property MapPublicIpOnLaunch enabled
+func ValidateExistingPublicSubnets(provider api.ClusterProvider, subnetIDs []string) error {
+	if len(subnetIDs) == 0 {
+		return nil
+	}
+	subnets, err := describeSubnets(provider, subnetIDs...)
+	if err != nil {
+		return err
+	}
+	if err := validatePublicSubnet(subnets); err != nil {
+		return err
+	}
+	return nil
 }
 
 // ImportAllSubnets will update spec with subnets, it will call describeSubnets first,
@@ -236,7 +273,7 @@ func ImportAllSubnets(provider api.ClusterProvider, spec *api.ClusterConfig) err
 	if err := ImportSubnetsFromList(provider, spec, api.SubnetTopologyPrivate, spec.PrivateSubnetIDs()); err != nil {
 		return err
 	}
-	if err := ImportSubnetsFromList(provider, spec, api.SubnetTopologyPublic, spec.PublicSubnetIDs()); err != nil {
+	if err := ImportValidatedSubnets(provider, spec, api.SubnetTopologyPublic, spec.PublicSubnetIDs()); err != nil {
 		return err
 	}
 	// to clean up invalid subnets based on AZ after imported both private and public subnets
@@ -275,4 +312,13 @@ func cleanupSubnets(spec *api.ClusterConfig) {
 			delete(spec.VPC.Subnets.Public, id)
 		}
 	}
+}
+
+func validatePublicSubnet(subnets []*ec2.Subnet) error {
+	for _, sn := range subnets {
+		if sn.MapPublicIpOnLaunch == nil || *sn.MapPublicIpOnLaunch == false {
+			return fmt.Errorf("found mis-configured subnet %q. Expected subnet with property \"MapPublicIpOnLaunch\" enabled. Without it new nodes won't get an IP assigned", *sn.SubnetId)
+		}
+	}
+	return nil
 }

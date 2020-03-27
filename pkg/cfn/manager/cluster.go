@@ -174,8 +174,7 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 	}
 
 	// Update the VPC by setting the flag MapPublicIpOnLaunch on public subnets
-	logger.Debug("updating subnets with MapPublicIpOnLaunch = true")
-	currentTemplate, modResources, err = c.setMapPublicIpOnLaunch(currentTemplate)
+	currentTemplate, modResources, err = c.ensureMapPublicIpOnLaunchEnabled(currentTemplate)
 	if err != nil {
 		return false, errors.Wrap(err, "unable to update public subnets with property MapPublicIpOnLaunch")
 	}
@@ -223,7 +222,8 @@ func getClusterNameTag(s *Stack) string {
 func getPublicSubnetResourceNames(outputsTemplate string) ([]string, error) {
 	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join.1.#.Ref")
 	if !publicSubnets.Exists() || len(publicSubnets.Array()) == 0 {
-		return nil, fmt.Errorf("invalid output SubnetsPublic. Expected Fn::Join but found %q", publicSubnets.Raw)
+		subnetsJson := gjson.Get(outputsTemplate, "SubnetsPublic.Value")
+		return nil, fmt.Errorf("resource name for public subnets not found. Found %q", subnetsJson.Raw)
 	}
 	subnetStackNames := make([]string, 0)
 	for _, subnet := range publicSubnets.Array() {

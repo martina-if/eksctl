@@ -221,21 +221,13 @@ func getClusterNameTag(s *Stack) string {
 // getPublicSubnetResourceNames returns the stack resource names for the public subnets, gotten from the stack
 // output "SubnetsPublic"
 func getPublicSubnetResourceNames(outputsTemplate string) ([]string, error) {
-	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join")
-	if !publicSubnets.Exists() || len(publicSubnets.Array()) != 2 {
+	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join.1.#.Ref")
+	if !publicSubnets.Exists() || len(publicSubnets.Array()) == 0 {
 		return nil, fmt.Errorf("invalid output SubnetsPublic. Expected Fn::Join but found %q", publicSubnets.Raw)
 	}
-	rawRefs := publicSubnets.Array()[1]
-	if !rawRefs.Exists() || len(rawRefs.Array()) == 0 {
-		return nil, fmt.Errorf("invalid output SubnetsPublic. Expected array of refs but found %q", rawRefs.Array())
-	}
 	subnetStackNames := make([]string, 0)
-	for _, ref := range rawRefs.Array() {
-		stackName := ref.Get("Ref")
-		if !stackName.Exists() {
-			return nil, fmt.Errorf("invalid output SubnetPublic. Expected array of refs but found %q", ref.Raw)
-		}
-		subnetStackNames = append(subnetStackNames, stackName.String())
+	for _, subnet := range publicSubnets.Array() {
+		subnetStackNames = append(subnetStackNames, subnet.String())
 	}
 	return subnetStackNames, nil
 }

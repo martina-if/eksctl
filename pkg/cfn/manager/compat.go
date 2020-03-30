@@ -99,6 +99,7 @@ func (c *StackCollection) ensureMapPublicIpOnLaunchEnabled(currentTemplate strin
 		// Subnets do not appear in the stack -> they were imported -> check their configuration in EC2
 		err = vpc.ValidateExistingPublicSubnets(c.provider, c.spec.PublicSubnetIDs())
 		if err != nil {
+			// TODO use vpc.EnsureMapPublicIpOnLaunchEnabled
 			return "", nil, errors.Wrapf(err, "mis-configured imported subnets. Expected property MapPublicIpOnLaunch enabled")
 		}
 		return currentTemplate, make([]string, 0), nil

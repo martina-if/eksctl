@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"k8s.io/kops/util/pkg/slice"
 
 	"github.com/kris-nova/logger"
@@ -255,6 +256,25 @@ func ValidateExistingPublicSubnets(provider api.ClusterProvider, subnetIDs []str
 	}
 	if err := validatePublicSubnet(subnets); err != nil {
 		return err
+	}
+	return nil
+}
+
+func EnsureMapPublicIpOnLaunchEnabled(provider api.ClusterProvider, subnetIDs []string) error {
+	if len(subnetIDs) == 0 {
+		return nil
+	}
+
+	for _, s := range subnetIDs {
+		input := &ec2.ModifySubnetAttributeInput{
+			SubnetId:            aws.String(s),
+			MapPublicIpOnLaunch: &ec2.AttributeBooleanValue{Value: aws.Bool(true)},
+		}
+
+		_, err := provider.EC2().ModifySubnetAttribute(input)
+		if err != nil {
+			return errors.Wrapf(err, "unable to set MapPublicIpOnLaunch attribute to true for subnet %q", s)
+		}
 	}
 	return nil
 }

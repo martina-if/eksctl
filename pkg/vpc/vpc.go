@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/kops/util/pkg/slice"
 
 	"github.com/kris-nova/logger"
@@ -245,6 +246,58 @@ func ImportValidatedSubnets(provider api.ClusterProvider, spec *api.ClusterConfi
 	return ImportSubnets(provider, spec, topology, subnets)
 }
 
+func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.ClusterProvider) error {
+	// If the cluster endpoint is reachable from the VPC we don't need to check the public subnets
+	if spec.HasPrivateEndpointAccess() {
+		return nil
+	}
+
+	subnetsToValidate := sets.NewString()
+	for _ , ng := range spec.NodeGroups {
+		if ng.PrivateNetworking == true {
+			continue
+		}
+
+		if len(ng.AvailabilityZones) > 0 {
+			// Check only the public subnets that this ng has
+			subnetIDs, err := SelectPublicNodeGroupSubnets(ng.AvailabilityZones, spec)
+			if err != nil {
+				return err
+			}
+			subnetsToValidate.Insert(subnetIDs...)
+		} else {
+			// This ng doesn't have AZs defined so we need to check all public subnets
+			for _, subnet := range spec.VPC.Subnets.Public {
+				subnetsToValidate.Insert(subnet.ID)
+			}
+			break
+		}
+	}
+
+	for _ , ng := range spec.ManagedNodeGroups {
+		if len(ng.AvailabilityZones) > 0 {
+			// Check only the public subnets that this ng has
+			subnetIDs, err := SelectPublicNodeGroupSubnets(ng.AvailabilityZones, spec)
+			if err != nil {
+				return err
+			}
+			subnetsToValidate.Insert(subnetIDs...)
+		} else {
+			// This ng doesn't have AZs defined so we need to check all public subnets
+			for _, subnet := range spec.VPC.Subnets.Public {
+				subnetsToValidate.Insert(subnet.ID)
+			}
+			break
+		}
+	}
+
+	if err := ValidateExistingPublicSubnets(provider, subnetsToValidate.List()); err != nil {
+		// TODO Fix message
+		return errors.Wrapf(err, "subnets for one of more new nodegroups don't meet requirements. Please run...")
+	}
+	return nil
+}
+
 // ValidateExistingPublicSubnets makes sure that subnets have the property MapPublicIpOnLaunch enabled
 func ValidateExistingPublicSubnets(provider api.ClusterProvider, subnetIDs []string) error {
 	if len(subnetIDs) == 0 {
@@ -341,4 +394,29 @@ func validatePublicSubnet(subnets []*ec2.Subnet) error {
 		}
 	}
 	return nil
+}
+
+func SelectPublicNodeGroupSubnets(nodegroupAZs []string, clusterSpec *api.ClusterConfig) ([]string, error) {
+	numNodeGroupsAZs := len(nodegroupAZs)
+	if numNodeGroupsAZs == 0 {
+		return make([]string, 0), nil
+	}
+
+	subnets := clusterSpec.VPC.Subnets.Public
+	makeErrorDesc := func() string {
+		return fmt.Sprintf("(subnets=%#v AZs=%#v)", subnets, nodegroupAZs)
+	}
+	if len(subnets) < numNodeGroupsAZs {
+		return nil, fmt.Errorf("VPC doesn't have enough subnets for nodegroup AZs %s", makeErrorDesc())
+	}
+	subnetIDs := make([]string, numNodeGroupsAZs)
+	for i, az := range nodegroupAZs {
+		subnet, ok := subnets[az]
+		if !ok {
+			return nil, fmt.Errorf("VPC doesn't have subnets in %s %s", az, makeErrorDesc())
+		}
+
+		subnetIDs[i] = subnet.ID
+	}
+	return subnetIDs, nil
 }

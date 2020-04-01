@@ -11,6 +11,7 @@ import (
 	"github.com/weaveworks/eksctl/pkg/eks"
 	"github.com/weaveworks/eksctl/pkg/ssh"
 	"github.com/weaveworks/eksctl/pkg/utils/names"
+	"github.com/weaveworks/eksctl/pkg/vpc"
 
 	api "github.com/weaveworks/eksctl/pkg/apis/eksctl.io/v1alpha5"
 	"github.com/weaveworks/eksctl/pkg/authconfigmap"
@@ -154,6 +155,11 @@ func doCreateNodeGroups(cmd *cmdutils.Cmd, ng *api.NodeGroup, params createNodeG
 	// TODO
 	if err := ctl.ValidateClusterForCompatibility(cfg, stackManager); err != nil {
 		return errors.Wrap(err, "cluster compatibility check failed")
+	}
+
+	// TODO Validate subnets for each ng
+	if err := vpc.ValidateLegacySubnetsForNodeGroups(cfg, ctl.Provider); err != nil {
+		return err
 	}
 
 	{

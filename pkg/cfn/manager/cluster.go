@@ -148,7 +148,6 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 
 	var (
 		addResources []string
-		modResources []string
 		addOutputs   []string
 		addMappings  []string
 	)
@@ -173,20 +172,14 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 		return false, errors.Wrap(iterErr, "adding mappings to current stack template")
 	}
 
-	// Update the VPC by setting the flag MapPublicIpOnLaunch on public subnets
-	currentTemplate, modResources, err = c.ensureMapPublicIpOnLaunchEnabled(currentTemplate)
-	if err != nil {
-		return false, errors.Wrap(err, "unable to update public subnets with property MapPublicIpOnLaunch")
-	}
-
-	if len(addResources) == 0 && len(addOutputs) == 0 && len(addMappings) == 0 && len(modResources) == 0 {
+	if len(addResources) == 0 && len(addOutputs) == 0 && len(addMappings) == 0 {
 		logger.Success("all resources in cluster stack %q are up-to-date", name)
 		return false, nil
 	}
 
 	logger.Debug("currentTemplate = %s", currentTemplate)
 
-	describeUpdate := fmt.Sprintf("updating stack to add new resources %v, new outputs %v, modified resources %v", addResources, addOutputs, modResources)
+	describeUpdate := fmt.Sprintf("updating stack to add new resources %v and new outputs %v", addResources, addOutputs)
 	if plan {
 		logger.Info("(plan) %s", describeUpdate)
 		return false, nil

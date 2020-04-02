@@ -292,8 +292,10 @@ func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.Cl
 	}
 
 	if err := ValidateExistingPublicSubnets(provider, subnetsToValidate.List()); err != nil {
-		// TODO Fix message
-		return errors.Wrapf(err, "subnets for one of more new nodegroups don't meet requirements. Please run...")
+		logger.Critical(err.Error())
+		return errors.Errorf("subnets for one of more new nodegroups don't meet requirements. " +
+			"To fix this, please run `eksctl utils update-legacy-subnet-settings --cluster %s`",
+			spec.Metadata.Name)
 	}
 	return nil
 }
@@ -390,7 +392,8 @@ func cleanupSubnets(spec *api.ClusterConfig) {
 func validatePublicSubnet(subnets []*ec2.Subnet) error {
 	for _, sn := range subnets {
 		if sn.MapPublicIpOnLaunch == nil || *sn.MapPublicIpOnLaunch == false {
-			return fmt.Errorf("found mis-configured subnet %q. Expected subnet with property \"MapPublicIpOnLaunch\" enabled. Without it new nodes won't get an IP assigned", *sn.SubnetId)
+			return fmt.Errorf("found mis-configured subnet %q. Expected public subnet with property " +
+				"\"MapPublicIpOnLaunch\" enabled. Without it new nodes won't get an IP assigned", *sn.SubnetId)
 		}
 	}
 	return nil

@@ -157,7 +157,6 @@ func doCreateNodeGroups(cmd *cmdutils.Cmd, ng *api.NodeGroup, params createNodeG
 		return errors.Wrap(err, "cluster compatibility check failed")
 	}
 
-	// TODO Validate subnets for each ng
 	if err := vpc.ValidateLegacySubnetsForNodeGroups(cfg, ctl.Provider); err != nil {
 		return err
 	}

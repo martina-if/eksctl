@@ -122,7 +122,6 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 	if err != nil {
 		return false, errors.Wrapf(err, "rendering template for %q stack", name)
 	}
-
 	logger.Debug("newTemplate = %s", newTemplate)
 
 	newResources := gjson.Get(string(newTemplate), resourcesRootPath)
@@ -179,12 +178,11 @@ func (c *StackCollection) AppendNewClusterStackResource(plan, supportsManagedNod
 
 	logger.Debug("currentTemplate = %s", currentTemplate)
 
-	describeUpdate := fmt.Sprintf("updating stack to add new resources %v and new outputs %v", addResources, addOutputs)
+	describeUpdate := fmt.Sprintf("updating stack to add new resources %v and outputs %v", addResources, addOutputs)
 	if plan {
 		logger.Info("(plan) %s", describeUpdate)
 		return false, nil
 	}
-
 	return true, c.UpdateStack(name, c.MakeChangeSetName("update-cluster"), describeUpdate, []byte(currentTemplate), nil)
 }
 
@@ -210,17 +208,3 @@ func getClusterNameTag(s *Stack) string {
 	return ""
 }
 
-// getPublicSubnetResourceNames returns the stack resource names for the public subnets, gotten from the stack
-// output "SubnetsPublic"
-func getPublicSubnetResourceNames(outputsTemplate string) ([]string, error) {
-	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join.1.#.Ref")
-	if !publicSubnets.Exists() || len(publicSubnets.Array()) == 0 {
-		subnetsJson := gjson.Get(outputsTemplate, "SubnetsPublic.Value")
-		return nil, fmt.Errorf("resource name for public subnets not found. Found %q", subnetsJson.Raw)
-	}
-	subnetStackNames := make([]string, 0)
-	for _, subnet := range publicSubnets.Array() {
-		subnetStackNames = append(subnetStackNames, subnet.String())
-	}
-	return subnetStackNames, nil
-}

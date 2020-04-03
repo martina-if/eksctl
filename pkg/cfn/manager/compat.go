@@ -117,7 +117,6 @@ func (c *StackCollection) EnsureMapPublicIpOnLaunchEnabled() error {
 			}
 		}
 	}
-	// TODO
 	description := fmt.Sprintf("update public subnets %q with property MapPublicIpOnLaunch enabled", publicSubnetsNames)
 	if err := c.UpdateStack(stackName, c.MakeChangeSetName("update-subnets"), description, []byte(currentTemplate), nil); err != nil {
 		return errors.Wrap(err, "unable to update subnets")
@@ -154,4 +153,20 @@ func (c *StackCollection) isMapPublicIpOnLaunchEnabled() (bool, error) {
 
 func subnetResourcePath(subnetName string) string {
 	return fmt.Sprintf("Resources.%s.Properties.MapPublicIpOnLaunch", subnetName)
+}
+
+
+// getPublicSubnetResourceNames returns the stack resource names for the public subnets, gotten from the stack
+// output "SubnetsPublic"
+func getPublicSubnetResourceNames(outputsTemplate string) ([]string, error) {
+	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join.1.#.Ref")
+	if !publicSubnets.Exists() || len(publicSubnets.Array()) == 0 {
+		subnetsJson := gjson.Get(outputsTemplate, "SubnetsPublic.Value")
+		return nil, fmt.Errorf("resource name for public subnets not found. Found %q", subnetsJson.Raw)
+	}
+	subnetStackNames := make([]string, 0)
+	for _, subnet := range publicSubnets.Array() {
+		subnetStackNames = append(subnetStackNames, subnet.String())
+	}
+	return subnetStackNames, nil
 }

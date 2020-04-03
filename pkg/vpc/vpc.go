@@ -226,26 +226,6 @@ func ImportSubnetsFromList(provider api.ClusterProvider, spec *api.ClusterConfig
 	return ImportSubnets(provider, spec, topology, subnets)
 }
 
-// ImportValidatedSubnets will update the clusterconfig (spec) with the subnets metadata gotten from Ec2. But first it
-// will check that public subnets have the property MapPublicIpOnLaunch set
-// NOTE: it does respect all fields set in spec.VPC, and will error if
-// there is a mismatch of local vs remote states
-func ImportValidatedSubnets(provider api.ClusterProvider, spec *api.ClusterConfig, topology api.SubnetTopology, subnetIDs []string) error {
-	if len(subnetIDs) == 0 {
-		return nil
-	}
-	subnets, err := describeSubnets(provider, subnetIDs...)
-	if err != nil {
-		return err
-	}
-	if topology == api.SubnetTopologyPublic {
-		if err := validatePublicSubnet(subnets); err != nil {
-			return err
-		}
-	}
-	return ImportSubnets(provider, spec, topology, subnets)
-}
-
 func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.ClusterProvider) error {
 	// If the cluster endpoint is reachable from the VPC we don't need to check the public subnets
 	if spec.HasPrivateEndpointAccess() {
@@ -348,7 +328,7 @@ func ImportAllSubnets(provider api.ClusterProvider, spec *api.ClusterConfig) err
 	if err := ImportSubnetsFromList(provider, spec, api.SubnetTopologyPrivate, spec.PrivateSubnetIDs()); err != nil {
 		return err
 	}
-	if err := ImportValidatedSubnets(provider, spec, api.SubnetTopologyPublic, spec.PublicSubnetIDs()); err != nil {
+	if err := ImportSubnetsFromList(provider, spec, api.SubnetTopologyPublic, spec.PublicSubnetIDs()); err != nil {
 		return err
 	}
 	// to clean up invalid subnets based on AZ after imported both private and public subnets

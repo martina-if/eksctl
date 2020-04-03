@@ -9,7 +9,6 @@ import (
 	"github.com/weaveworks/eksctl/pkg/ctl/cmdutils"
 )
 
-
 func updateLegacySubnetSettings(cmd *cmdutils.Cmd) {
 	cfg := api.NewClusterConfig()
 	cmd.ClusterConfig = cfg
@@ -57,7 +56,7 @@ func doUpdateLegacySubnetSettings(cmd *cmdutils.Cmd) error {
 	}
 	stackManager := ctl.NewStackManager(cfg)
 
-	err = stackManager.EnsureMapPublicIpOnLaunchEnabled()
+	err = stackManager.EnsureMapPublicIPOnLaunchEnabled()
 	if err != nil {
 		logger.Warning(err.Error())
 		return err

@@ -81,9 +81,9 @@ func (c *StackCollection) hasManagedToUnmanagedSG() (bool, error) {
 	return builder.HasManagedNodesSG(&stackResources), nil
 }
 
-// EnsureMapPublicIpOnLaunchEnabled sets this subnet property to true when it is not set or is set to false
+// EnsureMapPublicIPOnLaunchEnabled sets this subnet property to true when it is not set or is set to false
 // returns the modified template and the list of modified subnets
-func (c *StackCollection) EnsureMapPublicIpOnLaunchEnabled() error {
+func (c *StackCollection) EnsureMapPublicIPOnLaunchEnabled() error {
 	// Get stack template
 	stackName := c.makeClusterStackName()
 	currentTemplate, err := c.GetStackTemplate(stackName)
@@ -97,7 +97,7 @@ func (c *StackCollection) EnsureMapPublicIpOnLaunchEnabled() error {
 	if err != nil {
 		// Subnets do not appear in the stack -> they were imported -> change their configuration in EC2
 		logger.Debug("enabling attribute MapPublicIpOnLaunch on subnets %q", c.spec.PublicSubnetIDs())
-		err = vpc.EnsureMapPublicIpOnLaunchEnabled(c.provider, c.spec.PublicSubnetIDs())
+		err = vpc.EnsureMapPublicIPOnLaunchEnabled(c.provider, c.spec.PublicSubnetIDs())
 		if err != nil {
 			return err
 		}
@@ -124,45 +124,17 @@ func (c *StackCollection) EnsureMapPublicIpOnLaunchEnabled() error {
 	return nil
 }
 
-func (c *StackCollection) isMapPublicIpOnLaunchEnabled() (bool, error) {
-	currentTemplate, err := c.GetStackTemplate(c.makeClusterStackName())
-	if err != nil {
-		return false, errors.Wrapf(err, "error getting stack template %s", c.makeClusterStackName())
-	}
-
-	outputTemplate := gjson.Get(currentTemplate, outputsRootPath)
-	publicSubnetsNames, err := getPublicSubnetResourceNames(outputTemplate.Raw)
-	if err != nil {
-		// Subnets do not appear in the stack -> they were imported -> check their configuration in EC2
-		err = vpc.ValidateExistingPublicSubnets(c.provider, c.spec.PublicSubnetIDs())
-		if err != nil {
-			return false, nil
-		}
-		return true, nil
-	}
-
-	// Subnets appear in the stack
-	for _, subnet := range publicSubnetsNames {
-		currentValue := gjson.Get(currentTemplate, subnetResourcePath(subnet))
-		if !currentValue.Exists() || !currentValue.Bool() {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
 func subnetResourcePath(subnetName string) string {
 	return fmt.Sprintf("Resources.%s.Properties.MapPublicIpOnLaunch", subnetName)
 }
-
 
 // getPublicSubnetResourceNames returns the stack resource names for the public subnets, gotten from the stack
 // output "SubnetsPublic"
 func getPublicSubnetResourceNames(outputsTemplate string) ([]string, error) {
 	publicSubnets := gjson.Get(outputsTemplate, "SubnetsPublic.Value.Fn::Join.1.#.Ref")
 	if !publicSubnets.Exists() || len(publicSubnets.Array()) == 0 {
-		subnetsJson := gjson.Get(outputsTemplate, "SubnetsPublic.Value")
-		return nil, fmt.Errorf("resource name for public subnets not found. Found %q", subnetsJson.Raw)
+		subnetsJSON := gjson.Get(outputsTemplate, "SubnetsPublic.Value")
+		return nil, fmt.Errorf("resource name for public subnets not found. Found %q", subnetsJSON.Raw)
 	}
 	subnetStackNames := make([]string, 0)
 	for _, subnet := range publicSubnets.Array() {

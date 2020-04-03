@@ -207,4 +207,3 @@ func getClusterNameTag(s *Stack) string {
 	}
 	return ""
 }
-

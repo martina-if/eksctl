@@ -245,5 +245,5 @@ func (c *ClusterConfig) HasPrivateEndpointAccess() bool {
 	return c.VPC != nil &&
 		c.VPC.ClusterEndpoints != nil &&
 		c.VPC.ClusterEndpoints.PrivateAccess != nil &&
-		*c.VPC.ClusterEndpoints.PrivateAccess == true
+		*c.VPC.ClusterEndpoints.PrivateAccess
 }

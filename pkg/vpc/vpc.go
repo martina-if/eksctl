@@ -233,8 +233,8 @@ func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.Cl
 	}
 
 	subnetsToValidate := sets.NewString()
-	for _ , ng := range spec.NodeGroups {
-		if ng.PrivateNetworking == true {
+	for _, ng := range spec.NodeGroups {
+		if ng.PrivateNetworking {
 			continue
 		}
 
@@ -254,7 +254,7 @@ func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.Cl
 		}
 	}
 
-	for _ , ng := range spec.ManagedNodeGroups {
+	for _, ng := range spec.ManagedNodeGroups {
 		if len(ng.AvailabilityZones) > 0 {
 			// Check only the public subnets that this ng has
 			subnetIDs, err := SelectPublicNodeGroupSubnets(ng.AvailabilityZones, spec)
@@ -273,7 +273,7 @@ func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.Cl
 
 	if err := ValidateExistingPublicSubnets(provider, subnetsToValidate.List()); err != nil {
 		logger.Critical(err.Error())
-		return errors.Errorf("subnets for one of more new nodegroups don't meet requirements. " +
+		return errors.Errorf("subnets for one of more new nodegroups don't meet requirements. "+
 			"To fix this, please run `eksctl utils update-legacy-subnet-settings --cluster %s`",
 			spec.Metadata.Name)
 	}
@@ -295,7 +295,7 @@ func ValidateExistingPublicSubnets(provider api.ClusterProvider, subnetIDs []str
 	return nil
 }
 
-func EnsureMapPublicIpOnLaunchEnabled(provider api.ClusterProvider, subnetIDs []string) error {
+func EnsureMapPublicIPOnLaunchEnabled(provider api.ClusterProvider, subnetIDs []string) error {
 	if len(subnetIDs) == 0 {
 		return nil
 	}
@@ -371,8 +371,8 @@ func cleanupSubnets(spec *api.ClusterConfig) {
 
 func validatePublicSubnet(subnets []*ec2.Subnet) error {
 	for _, sn := range subnets {
-		if sn.MapPublicIpOnLaunch == nil || *sn.MapPublicIpOnLaunch == false {
-			return fmt.Errorf("found mis-configured subnet %q. Expected public subnet with property " +
+		if sn.MapPublicIpOnLaunch == nil || !*sn.MapPublicIpOnLaunch {
+			return fmt.Errorf("found mis-configured subnet %q. Expected public subnet with property "+
 				"\"MapPublicIpOnLaunch\" enabled. Without it new nodes won't get an IP assigned", *sn.SubnetId)
 		}
 	}

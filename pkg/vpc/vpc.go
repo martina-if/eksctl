@@ -233,47 +233,44 @@ func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.Cl
 	}
 
 	subnetsToValidate := sets.NewString()
+
+	selectSubnets := func(azs []string) error {
+		if len(azs) > 0 {
+			// Check only the public subnets that this ng has
+			subnetIDs, err := SelectPublicNodeGroupSubnets(azs, spec)
+			if err != nil {
+				return err
+			}
+			subnetsToValidate.Insert(subnetIDs...)
+		} else {
+			// This ng doesn't have AZs defined so we need to check all public subnets
+			for _, subnet := range spec.VPC.Subnets.Public {
+				subnetsToValidate.Insert(subnet.ID)
+			}
+		}
+		return nil
+	}
+
 	for _, ng := range spec.NodeGroups {
 		if ng.PrivateNetworking {
 			continue
 		}
-
-		if len(ng.AvailabilityZones) > 0 {
-			// Check only the public subnets that this ng has
-			subnetIDs, err := SelectPublicNodeGroupSubnets(ng.AvailabilityZones, spec)
-			if err != nil {
-				return err
-			}
-			subnetsToValidate.Insert(subnetIDs...)
-		} else {
-			// This ng doesn't have AZs defined so we need to check all public subnets
-			for _, subnet := range spec.VPC.Subnets.Public {
-				subnetsToValidate.Insert(subnet.ID)
-			}
-			break
+		err := selectSubnets(ng.AvailabilityZones)
+		if err != nil {
+			return err
 		}
 	}
 
 	for _, ng := range spec.ManagedNodeGroups {
-		if len(ng.AvailabilityZones) > 0 {
-			// Check only the public subnets that this ng has
-			subnetIDs, err := SelectPublicNodeGroupSubnets(ng.AvailabilityZones, spec)
-			if err != nil {
-				return err
-			}
-			subnetsToValidate.Insert(subnetIDs...)
-		} else {
-			// This ng doesn't have AZs defined so we need to check all public subnets
-			for _, subnet := range spec.VPC.Subnets.Public {
-				subnetsToValidate.Insert(subnet.ID)
-			}
-			break
+		err := selectSubnets(ng.AvailabilityZones)
+		if err != nil {
+			return err
 		}
 	}
 
 	if err := ValidateExistingPublicSubnets(provider, subnetsToValidate.List()); err != nil {
 		logger.Critical(err.Error())
-		return errors.Errorf("subnets for one of more new nodegroups don't meet requirements. "+
+		return errors.Errorf("subnets for one or more new nodegroups don't meet requirements. "+
 			"To fix this, please run `eksctl utils update-legacy-subnet-settings --cluster %s`",
 			spec.Metadata.Name)
 	}
@@ -382,7 +379,7 @@ func validatePublicSubnet(subnets []*ec2.Subnet) error {
 func SelectPublicNodeGroupSubnets(nodegroupAZs []string, clusterSpec *api.ClusterConfig) ([]string, error) {
 	numNodeGroupsAZs := len(nodegroupAZs)
 	if numNodeGroupsAZs == 0 {
-		return make([]string, 0), nil
+		return nil, nil
 	}
 
 	subnets := clusterSpec.VPC.Subnets.Public

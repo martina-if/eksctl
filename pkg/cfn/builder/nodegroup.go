@@ -242,6 +242,7 @@ func newLaunchTemplateData(n *NodeGroupResourceSet) *gfn.AWSEC2LaunchTemplate_La
 		ImageId:  gfn.NewString(n.spec.AMI),
 		UserData: n.userData,
 		NetworkInterfaces: []gfn.AWSEC2LaunchTemplate_NetworkInterface{{
+			// Explicitly un-setting this so that it doesn't get defaulted to true
 			AssociatePublicIpAddress: nil,
 			DeviceIndex:              gfn.NewInteger(0),
 			Groups:                   n.securityGroups,

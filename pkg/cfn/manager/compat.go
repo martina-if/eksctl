@@ -82,7 +82,6 @@ func (c *StackCollection) hasManagedToUnmanagedSG() (bool, error) {
 }
 
 // EnsureMapPublicIPOnLaunchEnabled sets this subnet property to true when it is not set or is set to false
-// returns the modified template and the list of modified subnets
 func (c *StackCollection) EnsureMapPublicIPOnLaunchEnabled() error {
 	// Get stack template
 	stackName := c.makeClusterStackName()

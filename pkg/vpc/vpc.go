@@ -367,12 +367,17 @@ func cleanupSubnets(spec *api.ClusterConfig) {
 }
 
 func validatePublicSubnet(subnets []*ec2.Subnet) error {
+	legacySubnets := make([]string, 0)
 	for _, sn := range subnets {
 		if sn.MapPublicIpOnLaunch == nil || !*sn.MapPublicIpOnLaunch {
-			return fmt.Errorf("found mis-configured subnet %q. Expected public subnet with property "+
-				"\"MapPublicIpOnLaunch\" enabled. Without it new nodes won't get an IP assigned", *sn.SubnetId)
+			legacySubnets = append(legacySubnets, *sn.SubnetId)
 		}
 	}
+	if len(legacySubnets) > 0 {
+		return fmt.Errorf("found mis-configured subnets %q. Expected public subnets with property "+
+			"\"MapPublicIpOnLaunch\" enabled. Without it new nodes won't get an IP assigned", legacySubnets)
+	}
+
 	return nil
 }
 

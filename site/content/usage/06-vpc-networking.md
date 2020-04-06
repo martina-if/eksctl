@@ -15,6 +15,9 @@ not insecure in principle, but some compromised workload could risk an access vi
 
 If that functionality doesn't suit you, the following options are currently available.
 
+>**_IMPORTANT_**: From `eksctl` version `0.17.0` and onwards public subnets will have the property `MapPublicIpOnlaunch` enabled, and the property `AssociatePublicIpAddress` disabled in the auto-scaling groups."
+
+
 ### Change VPC CIDR
 
 If you need to setup peering with another VPC, or simply need larger or smaller range of IPs, you can use `--vpc-cidr` flag to
@@ -71,6 +74,7 @@ recommended.
 - tagging of subnets
   - `kubernetes.io/cluster/<name>` tag set to either `shared` or `owned`
   - `kubernetes.io/role/internal-elb` tag set to `1` for private subnets
+- **NEW**: all public subnets should have the property `MapPublicIpOnLaunch` enabled (i.e. `Auto-assign public IPv4 address` in the AWS console)
 
 There maybe other requirements imposed by EKS or Kubernetes, and it is entirely up to you to stay up-to-date on any requirements and/or
 recommendations, and implement those as needed/possible.

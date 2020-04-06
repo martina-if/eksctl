@@ -227,11 +227,6 @@ func ImportSubnetsFromList(provider api.ClusterProvider, spec *api.ClusterConfig
 }
 
 func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.ClusterProvider) error {
-	// If the cluster endpoint is reachable from the VPC we don't need to check the public subnets
-	if spec.HasPrivateEndpointAccess() {
-		return nil
-	}
-
 	subnetsToValidate := sets.NewString()
 
 	selectSubnets := func(azs []string) error {
@@ -269,6 +264,14 @@ func ValidateLegacySubnetsForNodeGroups(spec *api.ClusterConfig, provider api.Cl
 	}
 
 	if err := ValidateExistingPublicSubnets(provider, subnetsToValidate.List()); err != nil {
+		// If the cluster endpoint is reachable from the VPC nodes might still be able to join
+		if spec.HasPrivateEndpointAccess() {
+			logger.Warning("public subnets for one or more nodegroups have %q disabled. This means that nodes won't "+
+				"get public IP addresses. If they can't reach the cluster through the private endpoint they won't be "+
+				"able to join the cluster", "MapPublicIpOnLaunch")
+			return nil
+		}
+
 		logger.Critical(err.Error())
 		return errors.Errorf("subnets for one or more new nodegroups don't meet requirements. "+
 			"To fix this, please run `eksctl utils update-legacy-subnet-settings --cluster %s`",
